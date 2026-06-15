@@ -1,0 +1,89 @@
+{
+  "_comment": "Selectors are STARTING POINTS and WILL drift as sites change their DOM. When search.py reports a miss, open the live page in the persistent-profile browser, inspect, and fix the entry here. See references/selectors.md.",
+  "_per_listing_tax": "imported_by_default is the marketplace baseline. result_imported_marker (optional) lets search.py override it PER LISTING when a result shows a cross-border badge (e.g. 'Enviado do exterior', 'Internacional'). result_import_fee (optional) captures an import charge the platform discloses on the result itself (e.g. Amazon's Import Fees Deposit) — when present it is used as-is instead of the Remessa Conforme estimate. currency defaults to BRL; set USD for foreign storefronts. in_default=false keeps a marketplace out of the default run set.",
+
+  "mercadolivre": {
+    "imported_by_default": false,
+    "currency": "BRL",
+    "login_url": "https://www.mercadolivre.com.br/jms/mlb/lgz/login",
+    "home_url": "https://www.mercadolivre.com.br/",
+    "search_url": "https://lista.mercadolivre.com.br/{query}",
+    "search_box": "input[name='as_word'], input.nav-search-input",
+    "logged_in_marker": "[data-link-id='my_account'], .nav-menu-item-link--my-account",
+    "result_item": "li.ui-search-layout__item",
+    "result_title": "a.poly-component__title, h2.ui-search-item__title",
+    "result_price_int": ".andes-money-amount__fraction, .price-tag-fraction",
+    "result_price_cents": ".andes-money-amount__cents, .price-tag-cents",
+    "result_link": "a.poly-component__title, a.ui-search-link",
+    "result_shipping_free": ".poly-component__shipping, .ui-search-item__shipping--free"
+  },
+
+  "amazon": {
+    "imported_by_default": false,
+    "currency": "BRL",
+    "login_url": "https://www.amazon.com.br/ap/signin",
+    "home_url": "https://www.amazon.com.br/",
+    "search_url": "https://www.amazon.com.br/s?k={query}",
+    "search_box": "#twotabsearchtextbox",
+    "logged_in_marker": "#nav-link-accountList[aria-label*='Olá'], #glow-ingress-line2",
+    "result_item": "div[data-component-type='s-search-result']",
+    "result_title": "h2 a span, h2 span",
+    "result_price_int": ".a-price-whole",
+    "result_price_cents": ".a-price-fraction",
+    "result_link": "h2 a, a.a-link-normal.s-no-outline",
+    "result_shipping_free": ".a-row .a-color-base:has-text('GRÁTIS'), [aria-label*='frete grátis']",
+    "result_imported_marker": ":has-text('Enviado do exterior'), :has-text('Importado'), :has-text('Encargos de Importação'), :has-text('encargos de importação'), [aria-label*='exterior']",
+    "result_import_fee": ":has-text('Encargos de Importação'), :has-text('encargos de importação'), :has-text('Import Fees Deposit')"
+  },
+
+  "amazon_us": {
+    "imported_by_default": true,
+    "currency": "USD",
+    "in_default": false,
+    "login_url": "https://www.amazon.com/ap/signin",
+    "home_url": "https://www.amazon.com/",
+    "search_url": "https://www.amazon.com/s?k={query}",
+    "search_box": "#twotabsearchtextbox",
+    "logged_in_marker": "#nav-link-accountList, #glow-ingress-line2",
+    "result_item": "div[data-component-type='s-search-result']",
+    "result_title": "h2 a span, h2 span",
+    "result_price_int": ".a-price-whole",
+    "result_price_cents": ".a-price-fraction",
+    "result_link": "h2 a, a.a-link-normal.s-no-outline",
+    "result_shipping_free": ".a-row .a-color-base:has-text('FREE'), [aria-label*='FREE Shipping']",
+    "result_import_fee": ":has-text('Import fees deposit'), :has-text('Import Fees Deposit'), :has-text('import charges')"
+  },
+
+  "aliexpress": {
+    "imported_by_default": true,
+    "currency": "BRL",
+    "login_url": "https://login.aliexpress.com/",
+    "home_url": "https://pt.aliexpress.com/",
+    "search_url": "https://pt.aliexpress.com/w/wholesale-{query}.html",
+    "search_box": "input#search-words, input[name='SearchText']",
+    "logged_in_marker": ".user-account-info, [class*='my-account']",
+    "result_item": "a[class*='search-card-item'], div[class*='list--gallery'] > div",
+    "result_title": "[class*='multi--titleText'], h3",
+    "result_price_int": "[class*='multi--price-sale'], div[class*='price-sale']",
+    "result_price_cents": "",
+    "result_link": "a[class*='search-card-item']",
+    "result_shipping_free": "[class*='shipping']:has-text('grátis'), [class*='freight']"
+  },
+
+  "shopee": {
+    "imported_by_default": false,
+    "currency": "BRL",
+    "login_url": "https://shopee.com.br/buyer/login",
+    "home_url": "https://shopee.com.br/",
+    "search_url": "https://shopee.com.br/search?keyword={query}",
+    "search_box": "input.shopee-searchbar-input__input",
+    "logged_in_marker": ".navbar__username, [class*='navbar'] [class*='username']",
+    "result_item": "li.shopee-search-item-result__item, .shopee-search-item-result__item",
+    "result_title": "div[data-sqe='name'], .line-clamp-2",
+    "result_price_int": ".shopee-search-item-result__item span[class*='font-medium'], [class*='_price']",
+    "result_price_cents": "",
+    "result_link": "a",
+    "result_shipping_free": "[class*='free-shipping'], img[alt*='Frete']",
+    "result_imported_marker": "[class*='flag-label']:has-text('Internacional'), :has-text('Enviado do exterior'), :has-text('Frete Internacional'), img[alt*='nternacional']"
+  }
+}

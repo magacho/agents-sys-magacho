@@ -1,0 +1,15 @@
+{
+  "name": "vibe-mp",
+  "owner": { "name": "magacho" },
+  "metadata": {
+    "description": "Local toolset — compare real landed prices (with import tax and shipping) across AliExpress, Mercado Livre, Shopee and Amazon.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "magents",
+      "source": "./plugins/magents",
+      "description": "Compare the real cost-to-your-door of a product across AliExpress, Mercado Livre, Shopee and Amazon — including Brazilian import tax (Remessa Conforme) and shipping — by driving the live sites with a stealth browser that reuses the user's own logged-in session. Runs locally."
+    }
+  ]
+}

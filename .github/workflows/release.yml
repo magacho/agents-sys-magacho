@@ -1,0 +1,39 @@
+name: Release
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Validate structure
+        run: bash scripts/validate.sh
+
+      - name: Resolve & check version
+        id: ver
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PJ=$(python3 -c "import json;print(json.load(open('plugins/magents/.claude-plugin/plugin.json'))['version'])")
+          if [ "$TAG" != "$PJ" ]; then
+            echo "::error::Tag v$TAG does not match plugin.json version $PJ. Bump plugin.json first."
+            exit 1
+          fi
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build release zips
+        run: bash scripts/build-zips.sh "${{ steps.ver.outputs.version }}"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true

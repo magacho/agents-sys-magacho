@@ -1,0 +1,18 @@
+# .dropboxignore — pastas/arquivos que não devem sincronizar no Dropbox.
+# Sintaxe estilo .gitignore. IMPORTANTE: padrões de exceção (!) NÃO são suportados.
+
+# Internals do git — principal causa de conflito/churn no Dropbox.
+# (O GitHub é a fonte da verdade do repo, então não precisa sincronizar isto.)
+.git/
+
+# Artefatos de build (regerados a cada release pelo build-zips.sh).
+dist/
+
+# Dependências, caso você adicione tooling de node depois.
+node_modules/
+
+# Caches do Python (o validate.sh roda python3).
+__pycache__/
+
+# Lixo de sistema.
+.DS_Store
