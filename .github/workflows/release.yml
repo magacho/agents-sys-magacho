@@ -10,7 +10,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install zip
         run: sudo apt-get update && sudo apt-get install -y zip
@@ -33,7 +33,7 @@ jobs:
         run: bash scripts/build-zips.sh "${{ steps.ver.outputs.version }}"
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/*.zip
           generate_release_notes: true
