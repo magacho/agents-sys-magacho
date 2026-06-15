@@ -71,31 +71,19 @@ To check which sessions are currently valid without logging in:
 python scripts/setup_session.py --status
 ```
 
-**Faster alternative — reuse the logins you already have.** If the user is already
-logged into these marketplaces in their everyday Chrome, seed the skill's profile
-from it once instead of logging in again:
+`setup_session.py` is the reliable way to get sessions, including for headless
+searches: the skill's own browser creates the session and reads it back with the
+same cookie-encryption key, so it decrypts consistently in later headless runs.
 
-```bash
-# QUIT Chrome first (required — see below), then:
-python scripts/seed_profile.py                 # from ~/.config/google-chrome, profile "Default"
-export MPC_CHROME_CHANNEL=chrome                # run with system Chrome (shares the cookie keyring)
-python scripts/setup_session.py --status        # confirm which sessions carried over
-```
-
-This copies the auth files (cookies, local/session storage, key state) into the
-skill's *own* isolated profile, so after seeding the user never has to close Chrome
-again or risk their day-to-day profile. It works only same-machine/same-user (the
-cookie key lives in that user's keyring).
-
-**Chrome must be fully closed during the seed.** Chrome keeps recently-used cookies
-in a write-ahead log that is only merged into the Cookies database on exit — so
-copying while it runs yields a stale, partial snapshot where exactly the
-freshly-used logins are missing. `seed_profile.py` refuses to run if Chrome is open
-(override with `--force`, accepting that recent sessions may not carry over).
-
-Sessions that don't carry over (different Chrome profile, expired, or never logged
-in there) just need a one-time `setup_session.py --marketplace <name>`. Pass
-`--profile "Profile 1"` if the logins are in another Chrome profile.
+**Why not just reuse the user's existing Chrome logins?** On Linux you can't,
+reliably. Chrome encrypts cookies with a key in the OS keyring, and an *automated*
+Chrome generally can't reach that key — so cookies copied from the user's real
+profile (different key) fail to decrypt and are dropped, leaving the session logged
+out. The skill therefore creates its own sessions (encrypted with a fixed,
+keyring-independent key — `--password-store=basic`, pinned in `browser.py`) so they
+survive into headless. `scripts/seed_profile.py` exists to copy a profile's files,
+but on Linux it will NOT carry the encrypted login cookies; treat it as best-effort
+and verify with `--status`. When in doubt, use `setup_session.py`.
 
 ### Step 2 — Search and compare
 

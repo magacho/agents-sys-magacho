@@ -38,6 +38,15 @@ PROFILE_DIR = Path.home() / ".marketplace-price-compare" / "profile"
 CHROME_CHANNEL = os.environ.get("MPC_CHROME_CHANNEL") or None
 CHROME_PATH = os.environ.get("MPC_CHROME_PATH") or None
 
+# Cookie encryption backend. An automated Chrome usually can't reach the OS
+# keyring ("Chrome Safe Storage"), so anything encrypted with it (v11 cookies)
+# won't decrypt and gets dropped — the reason a session created with one key and
+# read with another fails. Pinning "basic" gives a fixed, keyring-independent key
+# so the sessions THIS skill creates (via setup_session) encrypt and decrypt
+# consistently across headed login and headless search. Set MPC_PASSWORD_STORE
+# to override (e.g. "gnome-libsecret" to use the keyring, or "" to let Chrome decide).
+PASSWORD_STORE = os.environ.get("MPC_PASSWORD_STORE", "basic")
+
 # A plausible, consistent desktop UA. Keep it stable — randomizing the
 # fingerprint per run looks LESS human, not more.
 USER_AGENT = (
@@ -133,6 +142,8 @@ async def launch(headless: bool = True):
             "--no-first-run",
         ],
     )
+    if PASSWORD_STORE:
+        launch_kwargs["args"].append(f"--password-store={PASSWORD_STORE}")
     # Fall back to a system browser when configured (see CHROME_* above).
     if CHROME_PATH:
         launch_kwargs["executable_path"] = CHROME_PATH
