@@ -1,6 +1,6 @@
 {
   "name": "magents",
   "description": "Compare the real cost-to-your-door of a product across AliExpress, Mercado Livre, Shopee and Amazon — including Brazilian import tax (Remessa Conforme) and shipping — by driving the live sites with a stealth browser that reuses the user's own logged-in session. Runs locally.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": { "name": "Bemobi" }
 }
