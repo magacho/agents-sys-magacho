@@ -7,10 +7,15 @@ cloud IP — running there will get blocked regardless of stealth quality.
 
 from __future__ import annotations
 
+import os
 import sys
 import shutil
 import json
 import urllib.request
+
+# Candidate system browsers when Playwright's bundled Chromium is unavailable.
+SYSTEM_BROWSERS = ("google-chrome", "google-chrome-stable", "chromium",
+                   "chromium-browser", "microsoft-edge", "microsoft-edge-stable")
 
 
 def _ok(msg): print(f"  [ok]   {msg}")
@@ -34,20 +39,47 @@ def check_playwright() -> bool:
     except Exception:
         _fail("playwright missing  ->  pip install playwright")
         return False
-    # Chromium build present?
+
+    # A configured system-browser override satisfies the browser requirement
+    # without the bundled Chromium (see browser.py CHROME_* env vars).
+    path_override = os.environ.get("MPC_CHROME_PATH")
+    if path_override:
+        if os.path.exists(path_override):
+            _ok(f"using system browser via MPC_CHROME_PATH={path_override}")
+            return True
+        _fail(f"MPC_CHROME_PATH is set but the file does not exist: {path_override}")
+        return False
+    channel = os.environ.get("MPC_CHROME_CHANNEL")
+    if channel:
+        _ok(f"using system browser channel '{channel}' (MPC_CHROME_CHANNEL)")
+        return True
+
+    # Otherwise require Playwright's bundled Chromium.
     try:
         from playwright.sync_api import sync_playwright
         with sync_playwright() as p:
             path = p.chromium.executable_path
-            if path and shutil.os.path.exists(path):
+            if path and os.path.exists(path):
                 _ok("chromium build present")
                 return True
-            _fail("chromium not installed  ->  python -m playwright install chromium")
-            return False
     except Exception as e:
         _warn(f"could not verify chromium build ({e}); "
               "if launch fails run: python -m playwright install chromium")
         return True
+
+    # Bundled Chromium missing — point at a system browser if one exists, since
+    # `playwright install chromium` may not have a build for very new OSes.
+    found = next((b for b in SYSTEM_BROWSERS if shutil.which(b)), None)
+    if found:
+        _warn("bundled chromium not installed, but found system browser "
+              f"'{found}' at {shutil.which(found)}.\n"
+              "         Use it by exporting one of:\n"
+              "           export MPC_CHROME_CHANNEL=chrome\n"
+              f"           export MPC_CHROME_PATH={shutil.which(found)}\n"
+              "         (or install the bundled build: python -m playwright install chromium)")
+        return False
+    _fail("chromium not installed  ->  python -m playwright install chromium")
+    return False
 
 
 def check_stealth() -> bool:

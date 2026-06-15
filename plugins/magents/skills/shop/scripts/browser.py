@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import math
+import os
 import random
 from pathlib import Path
 from contextlib import asynccontextmanager
@@ -26,6 +27,16 @@ from contextlib import asynccontextmanager
 from playwright.async_api import async_playwright, Page, BrowserContext
 
 PROFILE_DIR = Path.home() / ".marketplace-price-compare" / "profile"
+
+# Optional overrides for hosts where Playwright can't fetch its bundled Chromium
+# (e.g. a brand-new OS release it doesn't have a build for yet). Point at a
+# browser already installed on the machine instead — same stealth/profile,
+# different binary:
+#   MPC_CHROME_CHANNEL=chrome   -> use the installed Google Chrome (or "msedge", "chromium")
+#   MPC_CHROME_PATH=/path/to/chrome  -> explicit executable, wins over the channel
+# Leave both unset to use Playwright's bundled Chromium (the default).
+CHROME_CHANNEL = os.environ.get("MPC_CHROME_CHANNEL") or None
+CHROME_PATH = os.environ.get("MPC_CHROME_PATH") or None
 
 # A plausible, consistent desktop UA. Keep it stable — randomizing the
 # fingerprint per run looks LESS human, not more.
@@ -37,6 +48,25 @@ USER_AGENT = (
 VIEWPORT = {"width": 1366, "height": 768}
 LOCALE = "pt-BR"
 TIMEZONE = "America/Sao_Paulo"
+
+
+def is_chrome_running(user_data_dir) -> bool:
+    """Best-effort check whether a Chrome instance is holding `user_data_dir`.
+
+    Chromium locks a profile dir to one process via a `SingletonLock` symlink
+    pointing at "host-PID"; if that PID is alive, the dir is in use.
+    """
+    lock = Path(user_data_dir).expanduser() / "SingletonLock"
+    try:
+        target = os.readlink(lock)            # raises if not a symlink / missing
+        pid = int(target.rsplit("-", 1)[-1])
+    except (OSError, ValueError):
+        return lock.exists()                  # lock present but unreadable — assume in use
+    try:
+        os.kill(pid, 0)                        # signal 0 = liveness probe, doesn't kill
+        return True
+    except OSError:
+        return False                           # stale lock from a dead process
 
 
 def _apply_stealth_sync(obj) -> bool:
@@ -90,20 +120,26 @@ async def launch(headless: bool = True):
     profile. Use headless=False for the interactive login (setup_session).
     """
     PROFILE_DIR.mkdir(parents=True, exist_ok=True)
+    launch_kwargs = dict(
+        user_data_dir=str(PROFILE_DIR),
+        headless=headless,
+        user_agent=USER_AGENT,
+        viewport=VIEWPORT,
+        locale=LOCALE,
+        timezone_id=TIMEZONE,
+        args=[
+            "--disable-blink-features=AutomationControlled",
+            "--no-default-browser-check",
+            "--no-first-run",
+        ],
+    )
+    # Fall back to a system browser when configured (see CHROME_* above).
+    if CHROME_PATH:
+        launch_kwargs["executable_path"] = CHROME_PATH
+    elif CHROME_CHANNEL:
+        launch_kwargs["channel"] = CHROME_CHANNEL
     async with async_playwright() as p:
-        context: BrowserContext = await p.chromium.launch_persistent_context(
-            user_data_dir=str(PROFILE_DIR),
-            headless=headless,
-            user_agent=USER_AGENT,
-            viewport=VIEWPORT,
-            locale=LOCALE,
-            timezone_id=TIMEZONE,
-            args=[
-                "--disable-blink-features=AutomationControlled",
-                "--no-default-browser-check",
-                "--no-first-run",
-            ],
-        )
+        context: BrowserContext = await p.chromium.launch_persistent_context(**launch_kwargs)
         page = context.pages[0] if context.pages else await context.new_page()
         await _apply_stealth(page)
         try:

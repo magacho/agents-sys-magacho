@@ -34,6 +34,21 @@ pip install playwright playwright-stealth
 python -m playwright install chromium
 ```
 
+On a PEP 668 "externally-managed" environment (recent Debian/Ubuntu), `pip install` is blocked system-wide — use a virtualenv instead and run the scripts with it:
+
+```bash
+python3 -m venv ~/.marketplace-price-compare/venv
+~/.marketplace-price-compare/venv/bin/pip install playwright playwright-stealth
+~/.marketplace-price-compare/venv/bin/python scripts/check_env.py   # and for setup_session.py / search.py
+```
+
+**If `python -m playwright install chromium` fails** (e.g. Playwright has no bundled build for a brand-new OS release), use a browser already on the machine instead — `check_env.py` detects it and prints the exact export. Point the skill at it with either env var (set it for every run):
+
+```bash
+export MPC_CHROME_CHANNEL=chrome          # use installed Google Chrome (or "msedge"/"chromium")
+# or: export MPC_CHROME_PATH=/usr/bin/google-chrome   # explicit executable
+```
+
 If `check_env.py` warns that the host looks like a datacenter/cloud IP, STOP and tell the user — this skill will get blocked there and must run on their own machine/network.
 
 ## Workflow
@@ -55,6 +70,24 @@ To check which sessions are currently valid without logging in:
 ```bash
 python scripts/setup_session.py --status
 ```
+
+**Faster alternative — reuse the logins you already have.** If the user is already
+logged into these marketplaces in their everyday Chrome, seed the skill's profile
+from it once instead of logging in again:
+
+```bash
+python scripts/seed_profile.py                 # from ~/.config/google-chrome, profile "Default"
+export MPC_CHROME_CHANNEL=chrome                # run with system Chrome (shares the cookie keyring)
+python scripts/setup_session.py --status        # confirm which sessions carried over
+```
+
+This copies the auth files (cookies, local/session storage, key state) into the
+skill's *own* isolated profile, so the user never has to close their normal Chrome
+or risk their day-to-day profile. It works only same-machine/same-user (the cookie
+key lives in that user's keyring). Sessions that don't carry over (different Chrome
+profile, expired, or never logged in there) just need a one-time `setup_session.py
+--marketplace <name>`. Pass `--profile "Profile 1"` if the logins are in another
+Chrome profile. For a clean copy, quit Chrome before seeding.
 
 ### Step 2 — Search and compare
 
@@ -111,6 +144,7 @@ Do this repair pass yourself when you have browser access — you can load the p
 - `scripts/check_env.py` — dependency + environment (datacenter-IP) check.
 - `scripts/browser.py` — shared: launches the stealth persistent-context browser and provides humanized type/move/scroll helpers. All other scripts import this.
 - `scripts/setup_session.py` — opens the visible login browser per marketplace and validates/reports session status.
+- `scripts/seed_profile.py` — one-time seed of the skill's isolated profile from the user's real Chrome profile, to reuse existing logins without re-authenticating.
 - `scripts/search.py` — orchestrator: search → scrape → per-listing import detection → tax → ranked-by-BRL output.
 - `scripts/tax.py` — Brazilian import-tax (Remessa Conforme) + shipping normalization; also accepts a platform-disclosed import fee (e.g. Amazon Import Fees Deposit) to use as-is. Importable and runnable standalone.
 - `config/selectors.json` — per-marketplace selectors, URLs, currency, and the per-listing tax flags (`imported_by_default`, `result_imported_marker`, `result_import_fee`, `in_default`) — the part you edit when a site changes. Includes both `amazon` (amazon.com.br) and `amazon_us` (amazon.com).
