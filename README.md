@@ -65,7 +65,7 @@ Artefatos gerados por release (`scripts/build-zips.sh <version>`):
 **Claude Code / Cowork (via marketplace):**
 ```bash
 claude plugin marketplace add https://github.com/magacho/agents-sys-magacho
-claude plugin install magents@vibe-mp
+claude plugin install magents@shop
 ```
 
 **claude.ai / Claude Desktop (chat):** Customize → Skills → `+` → upload do `.zip` da skill (da Release).
