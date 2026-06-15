@@ -76,18 +76,26 @@ logged into these marketplaces in their everyday Chrome, seed the skill's profil
 from it once instead of logging in again:
 
 ```bash
+# QUIT Chrome first (required — see below), then:
 python scripts/seed_profile.py                 # from ~/.config/google-chrome, profile "Default"
 export MPC_CHROME_CHANNEL=chrome                # run with system Chrome (shares the cookie keyring)
 python scripts/setup_session.py --status        # confirm which sessions carried over
 ```
 
 This copies the auth files (cookies, local/session storage, key state) into the
-skill's *own* isolated profile, so the user never has to close their normal Chrome
-or risk their day-to-day profile. It works only same-machine/same-user (the cookie
-key lives in that user's keyring). Sessions that don't carry over (different Chrome
-profile, expired, or never logged in there) just need a one-time `setup_session.py
---marketplace <name>`. Pass `--profile "Profile 1"` if the logins are in another
-Chrome profile. For a clean copy, quit Chrome before seeding.
+skill's *own* isolated profile, so after seeding the user never has to close Chrome
+again or risk their day-to-day profile. It works only same-machine/same-user (the
+cookie key lives in that user's keyring).
+
+**Chrome must be fully closed during the seed.** Chrome keeps recently-used cookies
+in a write-ahead log that is only merged into the Cookies database on exit — so
+copying while it runs yields a stale, partial snapshot where exactly the
+freshly-used logins are missing. `seed_profile.py` refuses to run if Chrome is open
+(override with `--force`, accepting that recent sessions may not carry over).
+
+Sessions that don't carry over (different Chrome profile, expired, or never logged
+in there) just need a one-time `setup_session.py --marketplace <name>`. Pass
+`--profile "Profile 1"` if the logins are in another Chrome profile.
 
 ### Step 2 — Search and compare
 

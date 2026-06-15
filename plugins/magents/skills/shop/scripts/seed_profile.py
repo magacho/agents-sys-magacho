@@ -125,12 +125,18 @@ def main() -> int:
                     help="profile folder name inside the source dir (default 'Default')")
     ap.add_argument("--with-indexeddb", action="store_true",
                     help="also copy IndexedDB (large; some sites keep auth there)")
+    ap.add_argument("--force", action="store_true",
+                    help="seed even if Chrome is running (NOT recommended — see below)")
     args = ap.parse_args()
 
-    if B.is_chrome_running(args.source_dir):
-        print("[warn] Chrome appears to be running. For a clean copy of the Cookies database, "
-              "fully QUIT Chrome first, then re-run this. Proceeding anyway, but the copy may "
-              "miss the most recent writes.\n")
+    if B.is_chrome_running(args.source_dir) and not args.force:
+        print("[STOP] Chrome is running on that profile — refusing to seed.\n"
+              "       Chrome keeps recent cookies in a write-ahead log that is only merged into\n"
+              "       the Cookies database when it closes. Copying now gives a STALE, PARTIAL\n"
+              "       snapshot: freshly-used logins (the ones you care about) are silently missing.\n\n"
+              "       Fully QUIT Chrome, then re-run this. (Use --force to copy anyway, knowing\n"
+              "       recently-active sessions may not carry over.)")
+        return 1
 
     return seed(args.source_dir.expanduser(), args.profile, args.with_indexeddb)
 
