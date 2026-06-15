@@ -3,7 +3,7 @@
   "owner": { "name": "magacho" },
   "metadata": {
     "description": "Local toolset — compare real landed prices (with import tax and shipping) across AliExpress, Mercado Livre, Shopee and Amazon.",
-    "version": "0.2.0"
+    "version": "0.2.1"
   },
   "plugins": [
     {
